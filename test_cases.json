@@ -1,0 +1,33 @@
+[
+  {
+    "description": "Test Dropbox get_file",
+    "payload": {
+      "tool": "dropbox",
+      "task": "get_file",
+      "params": {
+        "path": "2. Areas of Responsibility/Unmistkable Creative/1.Podcast/Current Transcripts/Duncan Wardle.txt"
+      }
+    }
+  },
+  {
+    "description": "Test Dropbox search",
+    "payload": {
+      "tool": "dropbox",
+      "task": "search",
+      "params": {
+        "query": "Seth Godin"
+      }
+    }
+  },
+  {
+    "description": "Test GitHub force_apply_changes",
+    "payload": {
+      "tool": "github",
+      "task": "force_apply_changes",
+      "params": {
+        "path": "test_file.py",
+        "content": "print('Testing GitHub integration!')"
+      }
+    }
+  }
+]
