@@ -1,12 +1,16 @@
 import subprocess
 import sys
 import json
+import os
+
+# Define the path to the Git repository
+REPO_PATH = "/path/to/your/repo"  # Update this to your actual repo path
 
 def check_uncommitted_changes():
     """Check if there are uncommitted changes."""
     try:
         result = subprocess.run(
-            ["git", "status", "--porcelain"], capture_output=True, text=True, check=True
+            ["git", "status", "--porcelain"], cwd=REPO_PATH, capture_output=True, text=True, check=True
         )
         return bool(result.stdout.strip())  # True if there are changes
     except subprocess.CalledProcessError as e:
@@ -15,11 +19,12 @@ def check_uncommitted_changes():
 def commit_changes(message):
     """Commit staged changes to the repository."""
     try:
+        # Debug: Print uncommitted changes before attempting a commit
         if not check_uncommitted_changes():
             return {"status": "error", "message": "Nothing to commit"}
         
-        subprocess.run(["git", "add", "."], check=True)
-        subprocess.run(["git", "commit", "-m", message], check=True)
+        subprocess.run(["git", "add", "."], cwd=REPO_PATH, check=True)
+        subprocess.run(["git", "commit", "-m", message], cwd=REPO_PATH, check=True)
         return {"status": "success", "message": f"Committed changes with message: '{message}'"}
     except subprocess.CalledProcessError as e:
         return {"status": "error", "message": f"Git commit failed: {str(e)}"}
@@ -27,7 +32,7 @@ def commit_changes(message):
 def push_changes():
     """Push committed changes to the remote repository."""
     try:
-        subprocess.run(["git", "push"], check=True)
+        subprocess.run(["git", "push"], cwd=REPO_PATH, check=True)
         return {"status": "success", "message": "Changes pushed to remote repository"}
     except subprocess.CalledProcessError as e:
         return {"status": "error", "message": f"Git push failed: {str(e)}"}
@@ -35,7 +40,7 @@ def push_changes():
 def pull_changes():
     """Pull the latest changes from the remote repository."""
     try:
-        subprocess.run(["git", "pull"], check=True)
+        subprocess.run(["git", "pull"], cwd=REPO_PATH, check=True)
         return {"status": "success", "message": "Latest changes pulled from remote repository"}
     except subprocess.CalledProcessError as e:
         return {"status": "error", "message": f"Git pull failed: {str(e)}"}
