@@ -1,1 +1,153 @@
-{}
+{
+    "podcast_cover": {
+        "type": "script",
+        "path": "/Users/srinivas/Dropbox/1. Projects/Orchestrate/Orchestrate Modular/Workflows/PodcastCover2.py",
+        "argument_type": "positional",
+        "tasks": {
+            "create_cover": {
+                "params": {
+                    "episode_title": "",
+                    "guest_name": ""
+                }
+            }
+        }
+    },
+    "wordpress": {
+        "type": "api",
+        "base_url": "https://unmistakablecreative.com/wp-json/wp/v2",
+        "credentials": {
+            "username": "<WORDPRESS_USERNAME>",
+            "password": "<WORDPRESS_PASSWORD>"
+        },
+        "tasks": {
+            "publish_post": {
+                "endpoint": "/posts",
+                "method": "POST",
+                "params": {
+                    "title": "",
+                    "content": "",
+                    "status": "publish"
+                },
+                "response_format": {
+                    "type": "object",
+                    "fields": {
+                        "id": "response['id']",
+                        "link": "response['link']"
+                    }
+                }
+            },
+            "upload_media": {
+                "endpoint": "/media",
+                "method": "POST",
+                "params": {
+                    "file": ""
+                },
+                "response_format": {
+                    "type": "object",
+                    "fields": {
+                        "id": "response['id']",
+                        "source_url": "response['source_url']"
+                    }
+                }
+            }
+        }
+    },
+    "github": {
+        "type": "script",
+        "path": "/Users/srinivas/Dropbox/1. Projects/Orchestrate/Orchestrate Modular/Scripts/github_manager.py",
+        "tasks": {
+            "commit_changes": {
+                "description": "Commit staged changes to the repository.",
+                "params": {
+                    "message": ""
+                }
+            },
+            "push_changes": {
+                "description": "Push committed changes to the remote repository.",
+                "params": {}
+            },
+            "pull_changes": {
+                "description": "Pull the latest changes from the remote repository.",
+                "params": {}
+            },
+            "force_apply_changes": {
+                "description": "Force overwrite Orchestrate_Sandbox.py in sandbox directory.",
+                "params": {
+                    "path": "/Users/srinivas/Dropbox/1. Projects/Orchestrate/Orchestrate Modular/Scripts/Orchestrate_Sandbox.py"
+                }
+            }
+        }
+    },
+    "dropbox": {
+        "type": "script",
+        "path": "/Users/srinivas/Dropbox/1. Projects/Orchestrate/Orchestrate Modular/Scripts/dropbox_helper.py",
+        "credentials": {
+            "oauth2_access_token": "<DROPBOX_OAUTH_TOKEN>"
+        },
+        "tasks": {
+            "create_folder": {
+                "params": {
+                    "path": ""
+                }
+            },
+            "delete_file": {
+                "params": {
+                    "path": ""
+                }
+            },
+            "get_file": {
+                "params": {
+                    "path": ""
+                }
+            },
+            "get_temporary_link": {
+                "method": "files_get_temporary_link",
+                "params": {
+                    "file_path": ""
+                }
+            },
+            "upload_file": {
+                "params": {
+                    "destination_path": "",
+                    "file_path": ""
+                }
+            }
+        }
+    },
+    "slack": {
+        "base_url": "https://slack.com/api",
+        "credentials": {
+            "bot_token": "<SLACK_API_TOKEN>"
+        },
+        "tasks": {
+            "send_message": {
+                "endpoint": "/chat.postMessage",
+                "method": "POST",
+                "headers": {
+                    "Authorization": "Bearer <SLACK_API_TOKEN>",
+                    "Content-Type": "application/json"
+                },
+                "params": {
+                    "channel": "",
+                    "text": ""
+                }
+            }
+        }
+    },
+    "gmail": {
+        "base_url": "https://gmail.googleapis.com/gmail/v1",
+        "credentials": {
+            "client_id": "<GMAIL_CLIENT_ID>",
+            "client_secret": "<GMAIL_CLIENT_SECRET>",
+            "refresh_token": "<GMAIL_REFRESH_TOKEN>"
+        },
+        "tasks": {
+            "fetch_emails": {
+                "description": "Fetch unread emails using JavaScript",
+                "method": "script",
+                "path": "/Users/srinivas/Dropbox/1. Projects/Orchestrate/Orchestrate Modular/Scripts/fetchUnreadEmails.js",
+                "interpreter": "node"
+            }
+        }
+    }
+}
