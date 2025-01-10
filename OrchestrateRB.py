@@ -20,34 +20,49 @@ def get_toolstack():
     """Return the contents of toolstack.json."""
     return jsonify(load_toolstack())
 
+
 @app.route('/execute-task', methods=['POST'])
 def execute_task():
-    """Delegate task execution to script_executor.py."""
+    """Directly execute GitHub tasks within Flask."""
     data = request.json
     tool = data.get("tool")
     task = data.get("task")
     params = data.get("params", {})
 
+    # Load toolstack
     toolstack = load_toolstack()
     if tool not in toolstack:
         return jsonify({"error": f"Tool '{tool}' not found in toolstack."}), 400
 
-    tool_config = toolstack[tool]
-    script_path = os.path.join("Scripts", tool_config["path"])
-    payload = {"task": task, "params": params}
+    if tool == "github":
+        if task == "commit_changes":
+            message = params.get("message", "Default commit message")
+            try:
+                subprocess.run(["git", "add", "."], check=True)
+                subprocess.run(["git", "commit", "-m", message], check=True)
+                return jsonify({"status": "success", "message": f"Committed changes with message: '{message}'"})
+            except subprocess.CalledProcessError as e:
+                return jsonify({"status": "error", "message": f"Git commit failed: {e.stderr}"}), 500
 
-    try:
-        result = subprocess.run(
-            ["python", "Scripts/script_executor.py", script_path, json.dumps(payload)],
-            capture_output=True,
-            text=True,
-            check=True
-        )
-        return jsonify(json.loads(result.stdout))
-    except subprocess.CalledProcessError as e:
-        return jsonify({"error": f"Execution failed: {e.stderr}"}), 500
-    except json.JSONDecodeError:
-        return jsonify({"error": "Invalid JSON response from script"}), 500
+        elif task == "push_changes":
+            try:
+                subprocess.run(["git", "push"], check=True)
+                return jsonify({"status": "success", "message": "Changes pushed to remote repository"})
+            except subprocess.CalledProcessError as e:
+                return jsonify({"status": "error", "message": f"Git push failed: {e.stderr}"}), 500
+
+        elif task == "pull_changes":
+            try:
+                subprocess.run(["git", "pull"], check=True)
+                return jsonify({"status": "success", "message": "Latest changes pulled from remote repository"})
+            except subprocess.CalledProcessError as e:
+                return jsonify({"status": "error", "message": f"Git pull failed: {e.stderr}"}), 500
+
+        else:
+            return jsonify({"status": "error", "message": f"Unsupported GitHub task: {task}"}), 400
+
+    return jsonify({"error": f"Unsupported tool '{tool}'."}), 400
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
