@@ -75,6 +75,22 @@
                 "params": {
                     "path": "Orchestrate_Sandbox.py"
                 }
+            },
+            "git_add": {
+                "description": "Stage specific files or all files for commit.",
+                "params": {
+                    "path": ""
+                }
+            },
+            "git_status": {
+                "description": "Check for uncommitted changes.",
+                "params": {}
+            },
+            "git_reset": {
+                "description": "Unstage specific files or all files.",
+                "params": {
+                    "path": ""
+                }
             }
         }
     },

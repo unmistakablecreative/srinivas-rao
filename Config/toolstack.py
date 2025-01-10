@@ -34,7 +34,7 @@ def save_toolstack(toolstack):
 
 
 def add_tool(params):
-    """Add a new tool to the toolstack."""
+    """Add a new tool or tasks to an existing tool in the toolstack."""
     tool_name = params.get("tool_name")
     tool_config = params.get("tool_config")
 
@@ -43,9 +43,17 @@ def add_tool(params):
 
     toolstack = load_toolstack()
 
+    # Check if the tool exists; if it does, merge tasks instead of replacing the tool
     if tool_name in toolstack:
-        return {"error": f"Tool '{tool_name}' already exists in toolstack.json."}
+        existing_tool = toolstack[tool_name]
+        if "tasks" in existing_tool and "tasks" in tool_config:
+            existing_tool["tasks"].update(tool_config["tasks"])
+            save_toolstack(toolstack)
+            return {"status": "success", "message": f"Tasks updated for tool '{tool_name}'."}
+        else:
+            return {"error": f"Tool '{tool_name}' exists but does not have a 'tasks' section to update."}
 
+    # If the tool doesn't exist, add it as a new tool
     toolstack[tool_name] = tool_config
     save_toolstack(toolstack)
 

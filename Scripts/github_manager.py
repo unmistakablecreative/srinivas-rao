@@ -3,27 +3,50 @@ import sys
 import json
 import os
 
-# Define the path to the Git repository
-REPO_PATH = "/path/to/your/repo"  # Update this to your actual repo path
+# Define the correct Git repository path
+REPO_PATH = "/Users/srinivas/orchestrate-rebuild/"
 
-def check_uncommitted_changes():
-    """Check if there are uncommitted changes."""
+def git_add(path="."):
+    """Stage specific files or all files."""
+    try:
+        subprocess.run(["git", "add", path], cwd=REPO_PATH, check=True)
+        return {"status": "success", "message": f"Files staged: {path}"}
+    except subprocess.CalledProcessError as e:
+        return {"status": "error", "message": f"Git add failed: {str(e)}"}
+
+def git_status():
+    """Check for uncommitted changes."""
     try:
         result = subprocess.run(
             ["git", "status", "--porcelain"], cwd=REPO_PATH, capture_output=True, text=True, check=True
         )
-        return bool(result.stdout.strip())  # True if there are changes
+        if result.stdout.strip():
+            return {"status": "success", "changes": result.stdout.strip()}
+        return {"status": "success", "message": "No changes to commit"}
     except subprocess.CalledProcessError as e:
-        return {"status": "error", "message": f"Failed to check uncommitted changes: {str(e)}"}
+        return {"status": "error", "message": f"Failed to check status: {str(e)}"}
+
+def git_reset(path="."):
+    """Unstage specific files or all files."""
+    try:
+        subprocess.run(["git", "reset", path], cwd=REPO_PATH, check=True)
+        return {"status": "success", "message": f"Files unstaged: {path}"}
+    except subprocess.CalledProcessError as e:
+        return {"status": "error", "message": f"Git reset failed: {str(e)}"}
+
+def check_uncommitted_changes():
+    """Check if there are uncommitted changes."""
+    status = git_status()
+    if status.get("status") == "success" and "changes" in status:
+        return True
+    return False
 
 def commit_changes(message):
     """Commit staged changes to the repository."""
     try:
-        # Debug: Print uncommitted changes before attempting a commit
         if not check_uncommitted_changes():
             return {"status": "error", "message": "Nothing to commit"}
         
-        subprocess.run(["git", "add", "."], cwd=REPO_PATH, check=True)
         subprocess.run(["git", "commit", "-m", message], cwd=REPO_PATH, check=True)
         return {"status": "success", "message": f"Committed changes with message: '{message}'"}
     except subprocess.CalledProcessError as e:
@@ -63,7 +86,13 @@ def main():
         task = payload.get("task")
         params = payload.get("params", {})
 
-        if task == "commit_changes":
+        if task == "git_add":
+            result = git_add(params.get("path", "."))
+        elif task == "git_status":
+            result = git_status()
+        elif task == "git_reset":
+            result = git_reset(params.get("path", "."))
+        elif task == "commit_changes":
             result = commit_changes(params.get("message", "Default commit message"))
         elif task == "push_changes":
             result = push_changes()
