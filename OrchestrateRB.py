@@ -12,16 +12,13 @@ def load_toolstack():
     try:
         with open(TOOLSTACK_PATH, "r") as file:
             return json.load(file)
-    except FileNotFoundError:
-        return {"error": "toolstack.json not found."}
-    except json.JSONDecodeError as e:
-        return {"error": f"Invalid JSON format: {e}"}
+    except Exception as e:
+        return {"error": f"Failed to load toolstack.json: {str(e)}"}
 
 @app.route('/get-toolstack', methods=['GET'])
 def get_toolstack():
     """Return the contents of toolstack.json."""
     return jsonify(load_toolstack())
-
 
 @app.route('/execute-task', methods=['POST'])
 def execute_task():
@@ -36,10 +33,6 @@ def execute_task():
         return jsonify({"error": f"Tool '{tool}' not found in toolstack."}), 400
 
     tool_config = toolstack[tool]
-    tasks = tool_config.get("tasks", {})
-    if task not in tasks:
-        return jsonify({"error": f"Task '{task}' not found in tool '{tool}'."}), 400
-
     script_path = os.path.join("Scripts", tool_config["path"])
     payload = {"task": task, "params": params}
 
@@ -55,7 +48,6 @@ def execute_task():
         return jsonify({"error": f"Execution failed: {e.stderr}"}), 500
     except json.JSONDecodeError:
         return jsonify({"error": "Invalid JSON response from script"}), 500
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
