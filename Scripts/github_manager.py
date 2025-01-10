@@ -9,7 +9,7 @@ def commit_changes(message):
         subprocess.run(["git", "commit", "-m", message], check=True)
         return {"status": "success", "message": f"Changes committed with message: '{message}'"}
     except subprocess.CalledProcessError as e:
-        return {"status": "error", "message": str(e)}
+        return {"status": "error", "message": f"Git commit failed: {e}"}
 
 def push_changes():
     """Push committed changes to the remote repository."""
@@ -17,7 +17,7 @@ def push_changes():
         subprocess.run(["git", "push"], check=True)
         return {"status": "success", "message": "Changes pushed to remote repository"}
     except subprocess.CalledProcessError as e:
-        return {"status": "error", "message": str(e)}
+        return {"status": "error", "message": f"Git push failed: {e}"}
 
 def pull_changes():
     """Pull the latest changes from the remote repository."""
@@ -25,7 +25,7 @@ def pull_changes():
         subprocess.run(["git", "pull"], check=True)
         return {"status": "success", "message": "Latest changes pulled from remote repository"}
     except subprocess.CalledProcessError as e:
-        return {"status": "error", "message": str(e)}
+        return {"status": "error", "message": f"Git pull failed: {e}"}
 
 def main():
     """Process input and execute tasks."""
@@ -45,11 +45,12 @@ def main():
         elif task == "pull_changes":
             result = pull_changes()
         else:
-            result = {"error": f"Unsupported task: {task}"}
+            result = {"status": "error", "message": f"Unsupported task: {task}"}
 
-        print(json.dumps(result))
+        print(json.dumps(result))  # Ensure valid JSON output
     except Exception as e:
-        print(json.dumps({"error": str(e)}))
+        print(json.dumps({"status": "error", "message": str(e)}))
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
