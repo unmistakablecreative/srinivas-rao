@@ -54,7 +54,7 @@
     },
     "github": {
         "type": "script",
-        "path": "/Users/srinivas/Dropbox/1. Projects/Orchestrate/Orchestrate Modular/Scripts/github_manager.py",
+        "path": "github_manager.py",
         "tasks": {
             "commit_changes": {
                 "description": "Commit staged changes to the repository.",
@@ -73,7 +73,7 @@
             "force_apply_changes": {
                 "description": "Force overwrite Orchestrate_Sandbox.py in sandbox directory.",
                 "params": {
-                    "path": "/Users/srinivas/Dropbox/1. Projects/Orchestrate/Orchestrate Modular/Scripts/Orchestrate_Sandbox.py"
+                    "path": "Orchestrate_Sandbox.py"
                 }
             }
         }

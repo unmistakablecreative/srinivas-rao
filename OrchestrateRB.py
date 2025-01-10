@@ -1,0 +1,56 @@
+from flask import Flask, request, jsonify
+import subprocess
+import os
+import json
+
+app = Flask(__name__)
+
+TOOLSTACK_PATH = os.path.join(os.getcwd(), "Config", "toolstack.json")
+
+def load_toolstack():
+    """Load the toolstack.json file."""
+    try:
+        with open(TOOLSTACK_PATH, "r") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return {"error": "toolstack.json not found."}
+    except json.JSONDecodeError as e:
+        return {"error": f"Invalid JSON format: {e}"}
+
+@app.route('/get-toolstack', methods=['GET'])
+def get_toolstack():
+    """Return the contents of toolstack.json."""
+    return jsonify(load_toolstack())
+@app.route('/execute-task', methods=['POST'])
+def execute_task():
+    """Execute a task from toolstack.json."""
+    data = request.json
+    tool = data.get("tool")
+    task = data.get("task")
+    params = data.get("params", {})
+
+    toolstack = load_toolstack()
+    if tool not in toolstack:
+        return jsonify({"error": f"Tool '{tool}' not found in toolstack."}), 400
+
+    tool_config = toolstack[tool]
+    tasks = tool_config.get("tasks", {})
+    if task not in tasks:
+        return jsonify({"error": f"Task '{task}' not found in tool '{tool}'."}), 400
+
+    # Execute the script dynamically
+    try:
+        result = subprocess.run(
+            ["python", f"Scripts/{tool_config['path']}", json.dumps({"task": task, "params": params})],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return jsonify(json.loads(result.stdout))
+    except subprocess.CalledProcessError as e:
+        return jsonify({"error": f"Execution failed: {e.stderr}"}), 500
+    except json.JSONDecodeError:
+        return jsonify({"error": "Invalid JSON response from script"}), 500
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
