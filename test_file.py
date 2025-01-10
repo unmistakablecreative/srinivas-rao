@@ -1,1 +1,1 @@
-print('This is a test for force_apply_changes after fixing the script.')
+print('Testing end-to-end workflow!')
