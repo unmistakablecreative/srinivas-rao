@@ -15,10 +15,10 @@ def load_toolstack():
     except Exception as e:
         return {"error": f"Failed to load toolstack.json: {str(e)}"}
 
-@app.route('/get-toolstack', methods=['GET'])
-def get_toolstack():
-    """Return the contents of toolstack.json."""
-    return jsonify(load_toolstack())
+
+
+
+
 
 import os
 import subprocess
@@ -41,6 +41,23 @@ def load_toolstack():
     except Exception as e:
         logging.error(f"Failed to load toolstack.json: {str(e)}")
         return {"error": "Failed to load toolstack.json"}
+
+
+@app.route('/get-toolstack', methods=['GET'])
+def get_toolstack():
+    """Retrieve the toolstack.json configuration."""
+    TOOLSTACK_PATH = os.path.join(os.getcwd(), "Config", "toolstack.json")
+    try:
+        with open(TOOLSTACK_PATH, "r") as file:
+            toolstack = json.load(file)
+        return jsonify(toolstack), 200
+    except FileNotFoundError:
+        logging.error(f"Toolstack file not found at {TOOLSTACK_PATH}")
+        return jsonify({"error": "Toolstack file not found"}), 500
+    except json.JSONDecodeError as e:
+        logging.error(f"Failed to parse toolstack.json: {str(e)}")
+        return jsonify({"error": "Invalid JSON in toolstack.json"}), 500
+
 
 
 @app.route('/execute-task', methods=['POST'])
@@ -124,6 +141,3 @@ if __name__ == '__main__':
 
 
 
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
