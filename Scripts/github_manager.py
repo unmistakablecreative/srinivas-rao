@@ -6,67 +6,49 @@ import os
 # Define the correct Git repository path
 REPO_PATH = "/Users/srinivas/orchestrate-rebuild/"
 
+def run_git_command(command, cwd=REPO_PATH):
+    """Run a git command and handle errors."""
+    try:
+        result = subprocess.run(command, cwd=cwd, capture_output=True, text=True, check=True)
+        return {"status": "success", "output": result.stdout.strip()}
+    except subprocess.CalledProcessError as e:
+        return {"status": "error", "message": e.stderr.strip() or str(e)}
+
 def git_add(path="."):
     """Stage specific files or all files."""
-    try:
-        subprocess.run(["git", "add", path], cwd=REPO_PATH, check=True)
-        return {"status": "success", "message": f"Files staged: {path}"}
-    except subprocess.CalledProcessError as e:
-        return {"status": "error", "message": f"Git add failed: {str(e)}"}
+    return run_git_command(["git", "add", path])
 
 def git_status():
     """Check for uncommitted changes."""
-    try:
-        result = subprocess.run(
-            ["git", "status", "--porcelain"], cwd=REPO_PATH, capture_output=True, text=True, check=True
-        )
-        if result.stdout.strip():
-            return {"status": "success", "changes": result.stdout.strip()}
+    result = run_git_command(["git", "status", "--porcelain"])
+    if result["status"] == "success" and result.get("output"):
+        return {"status": "success", "changes": result["output"]}
+    elif result["status"] == "success":
         return {"status": "success", "message": "No changes to commit"}
-    except subprocess.CalledProcessError as e:
-        return {"status": "error", "message": f"Failed to check status: {str(e)}"}
+    return result
 
 def git_reset(path="."):
     """Unstage specific files or all files."""
-    try:
-        subprocess.run(["git", "reset", path], cwd=REPO_PATH, check=True)
-        return {"status": "success", "message": f"Files unstaged: {path}"}
-    except subprocess.CalledProcessError as e:
-        return {"status": "error", "message": f"Git reset failed: {str(e)}"}
+    return run_git_command(["git", "reset", path])
 
 def check_uncommitted_changes():
     """Check if there are uncommitted changes."""
     status = git_status()
-    if status.get("status") == "success" and "changes" in status:
-        return True
-    return False
+    return status.get("status") == "success" and "changes" in status
 
 def commit_changes(message):
     """Commit staged changes to the repository."""
-    try:
-        if not check_uncommitted_changes():
-            return {"status": "error", "message": "Nothing to commit"}
-        
-        subprocess.run(["git", "commit", "-m", message], cwd=REPO_PATH, check=True)
-        return {"status": "success", "message": f"Committed changes with message: '{message}'"}
-    except subprocess.CalledProcessError as e:
-        return {"status": "error", "message": f"Git commit failed: {str(e)}"}
+    if not check_uncommitted_changes():
+        return {"status": "error", "message": "Nothing to commit"}
+    return run_git_command(["git", "commit", "-m", message])
 
 def push_changes():
     """Push committed changes to the remote repository."""
-    try:
-        subprocess.run(["git", "push"], cwd=REPO_PATH, check=True)
-        return {"status": "success", "message": "Changes pushed to remote repository"}
-    except subprocess.CalledProcessError as e:
-        return {"status": "error", "message": f"Git push failed: {str(e)}"}
+    return run_git_command(["git", "push"])
 
 def pull_changes():
     """Pull the latest changes from the remote repository."""
-    try:
-        subprocess.run(["git", "pull"], cwd=REPO_PATH, check=True)
-        return {"status": "success", "message": "Latest changes pulled from remote repository"}
-    except subprocess.CalledProcessError as e:
-        return {"status": "error", "message": f"Git pull failed: {str(e)}"}
+    return run_git_command(["git", "pull"])
 
 def full_workflow(message):
     """Execute a full workflow: commit, then push."""
@@ -103,7 +85,7 @@ def main():
         else:
             result = {"status": "error", "message": f"Unsupported task: {task}"}
 
-        print(json.dumps(result))  # Always return valid JSON
+        print(json.dumps(result, indent=2))  # Improved JSON output for readability
     except Exception as e:
         print(json.dumps({"status": "error", "message": str(e)}))
 
