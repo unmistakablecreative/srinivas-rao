@@ -1,1 +1,1 @@
-print('Hello, Flask! Testing direct payload')
+print('This is a test for force_apply_changes after fixing the script.')

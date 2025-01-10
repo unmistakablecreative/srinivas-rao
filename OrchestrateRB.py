@@ -90,6 +90,11 @@ def execute_task():
                 subprocess.run(["git", "push"], cwd=repo_path, check=True)
                 return jsonify({"status": "success", "message": "Changes pushed to remote repository"})
 
+            elif task == "pull_changes":
+                logging.info("Executing pull_changes task.")
+                subprocess.run(["git", "pull"], cwd=repo_path, check=True)
+                return jsonify({"status": "success", "message": "Latest changes pulled from remote repository"})
+
             elif task == "force_apply_changes":
                 logging.info("Executing force_apply_changes task.")
                 path = params.get("path")
