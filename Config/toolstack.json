@@ -149,5 +149,13 @@
                 "interpreter": "node"
             }
         }
+    },
+    "system": {
+        "tasks": {
+            "bootstrap": {
+                "description": "Initialize directories and files for Orchestrate NEO.",
+                "params": {}
+            }
+        }
     }
 }
