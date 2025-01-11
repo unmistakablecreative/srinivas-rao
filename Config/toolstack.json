@@ -102,7 +102,7 @@
     },
     "dropbox": {
         "type": "script",
-        "path": "/Users/srinivas/Dropbox/1. Projects/Orchestrate/Orchestrate Modular/Scripts/dropbox_helper.py",
+        "path": "/Users/srinivas/orchestrate-rebuild/Scripts/dropbox_helper.py",
         "credentials": {
             "oauth2_access_token": "<DROPBOX_OAUTH_TOKEN>"
         },
@@ -177,6 +177,45 @@
             "run_tests": {
                 "description": "Run all automated tests.",
                 "params": {}
+            }
+        }
+    },
+    "execute_script": {
+        "type": "dynamic_script",
+        "tasks": {
+            "run_script": {
+                "description": "Execute a specified Python script dynamically with arguments or payload.",
+                "params": {
+                    "script_path": "Dynamic path to the Python script provided in the payload.",
+                    "arguments": "List of arguments to pass to the script",
+                    "payload": "Optional JSON payload for the script"
+                }
+            }
+        }
+    },
+    "toolstack": {
+        "type": "script",
+        "path": "/Users/srinivas/orchestrate-rebuild/Config/toolstack.py",
+        "tasks": {
+            "add_tool": {
+                "description": "Add a new tool or tasks to an existing tool in the toolstack.",
+                "params": {
+                    "tool_name": "",
+                    "tool_config": {}
+                }
+            },
+            "remove_tool": {
+                "description": "Remove a tool from the toolstack.",
+                "params": {
+                    "tool_name": ""
+                }
+            },
+            "update_tool": {
+                "description": "Update an existing tool in the toolstack.",
+                "params": {
+                    "tool_name": "",
+                    "updated_config": {}
+                }
             }
         }
     }

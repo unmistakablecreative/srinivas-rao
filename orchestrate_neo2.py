@@ -42,6 +42,49 @@ def get_toolstack():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
+
+@app.route('/execute-script', methods=['POST'])
+def execute_script():
+    """Execute a Python script dynamically."""
+    try:
+        # Parse JSON payload
+        data = request.get_json()
+        if not data or "script_path" not in data:
+            return jsonify({"status": "error", "message": "Missing or invalid 'script_path' parameter"}), 400
+
+        # Extract script path
+        script_path = data["script_path"]
+
+        # Ensure the script exists
+        if not os.path.exists(script_path):
+            return jsonify({"status": "error", "message": f"Script not found: {script_path}"}), 404
+
+        # Extract additional arguments or payload
+        arguments = data.get("arguments", [])  # Pass a list of arguments
+        if not isinstance(arguments, list):
+            return jsonify({"status": "error", "message": "'arguments' must be a list"}), 400
+
+        # Execute the script with arguments
+        result = subprocess.run(
+            ["python3", script_path] + arguments,
+            capture_output=True,
+            text=True
+        )
+
+        # Return the output and error (if any)
+        return jsonify({
+            "status": "success" if result.returncode == 0 else "error",
+            "output": result.stdout.strip(),
+            "error": result.stderr.strip()
+        }), 200 if result.returncode == 0 else 500
+
+    except Exception as e:
+        logging.error(f"Script execution failed: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+
+
 @app.route('/execute-task', methods=['POST'])
 def execute_task():
     """Execute tasks based on the toolstack configuration."""
@@ -137,6 +180,40 @@ def execute_task():
     except Exception as e:
         logging.error(f"Unexpected error: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
+
+
+
+@app.route('/self-test', methods=['GET'])
+def self_test():
+    """Run self-diagnostics for the server."""
+    try:
+        # Check toolstack loading
+        toolstack = load_toolstack()
+        if "error" in toolstack:
+            toolstack_status = "Toolstack failed to load"
+        else:
+            toolstack_status = "Toolstack loaded successfully"
+
+        # Check endpoint status (basic ping test)
+        try:
+            response = app.test_client().get('/get-toolstack')
+            endpoint_status = "All endpoints responding correctly" if response.status_code == 200 else "Issue with endpoints"
+        except Exception as e:
+            endpoint_status = f"Error testing endpoints: {str(e)}"
+
+        # Assemble diagnostics result
+        diagnostics = {
+            "toolstack_status": toolstack_status,
+            "endpoint_status": endpoint_status
+        }
+
+        return jsonify({"health": {"status": 200, "response": diagnostics}}), 200
+
+    except Exception as e:
+        logging.error(f"Self-test failed: {str(e)}")
+        return jsonify({"health": {"status": 500, "response": str(e)}}), 500
+
 
 
 if __name__ == '__main__':
