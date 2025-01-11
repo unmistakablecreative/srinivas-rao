@@ -95,6 +95,7 @@ def execute_script():
 def execute_task():
     """Execute tasks based on the toolstack configuration."""
     try:
+        # Parse input payload
         data = request.get_json()
         if not data:
             return jsonify({"status": "error", "message": "Invalid or missing payload"}), 400
@@ -103,6 +104,7 @@ def execute_task():
         task = data.get("task")
         params = data.get("params", {})
 
+        # Load toolstack
         toolstack = load_toolstack()
         if "error" in toolstack:
             return jsonify(toolstack), 500
@@ -111,41 +113,22 @@ def execute_task():
             logging.error(f"Tool '{tool}' not found in toolstack.")
             return jsonify({"status": "error", "message": f"Tool '{tool}' not found in toolstack."}), 400
 
+        # GitHub task execution
         if tool == "github":
-            repo_path = "/Users/srinivas/orchestrate-rebuild/"
+            repo_path = "/Users/srinivas/orchestrate-rebuild/"  # Path to Git repository
 
-            # GitHub Task: Add
-            if task == "git_add":
-                logging.info("Executing git_add task.")
-                path = params.get("path", ".")
-                subprocess.run(["git", "add", path], cwd=repo_path, check=True)
-                return jsonify({"status": "success", "message": f"Added files: {path}"})
-
-            # GitHub Task: Reset
-            elif task == "git_reset":
-                logging.info("Executing git_reset task.")
-                path = params.get("path", ".")
-                subprocess.run(["git", "reset", path], cwd=repo_path, check=True)
-                return jsonify({"status": "success", "message": f"Reset files: {path}"})
-
-            # GitHub Task: Status
-            elif task == "git_status":
-                logging.info("Executing git_status task.")
-                result = subprocess.run(["git", "status"], cwd=repo_path, capture_output=True, text=True, check=True)
-                return jsonify({"status": "success", "message": result.stdout})
-
-            # GitHub Task: Rollback
-            elif task == "rollback_changes":
-                logging.info("Executing rollback_changes task.")
-                commit_id = params.get("commit_id")
-                if not commit_id:
-                    return jsonify({"status": "error", "message": "commit_id is required"}), 400
-                subprocess.run(["git", "reset", "--hard", commit_id], cwd=repo_path, check=True)
-                return jsonify({"status": "success", "message": f"Rolled back to commit: {commit_id}"})
-
-            # Other existing tasks like commit, push, pull, force apply, etc.
-            elif task == "commit_changes":
+            if task == "commit_changes":
                 logging.info("Executing commit_changes task.")
+                status = subprocess.run(
+                    ["git", "status", "--porcelain"],
+                    cwd=repo_path,
+                    capture_output=True,
+                    text=True,
+                    check=True
+                )
+                if not status.stdout.strip():
+                    return jsonify({"status": "error", "message": "Nothing to commit"}), 400
+
                 message = params.get("message", "Default commit message")
                 subprocess.run(["git", "add", "."], cwd=repo_path, check=True)
                 subprocess.run(["git", "commit", "-m", message], cwd=repo_path, check=True)
@@ -173,10 +156,44 @@ def execute_task():
                     f.write(content)
                 return jsonify({"status": "success", "message": f"File '{path}' has been updated with provided content."})
 
+            elif task == "git_add":
+                logging.info("Executing git_add task.")
+                path = params.get("path", ".")
+                subprocess.run(["git", "add", path], cwd=repo_path, check=True)
+                return jsonify({"status": "success", "message": f"Files staged: {path}"})
+
+            elif task == "git_status":
+                logging.info("Executing git_status task.")
+                status = subprocess.run(
+                    ["git", "status", "--porcelain"],
+                    cwd=repo_path,
+                    capture_output=True,
+                    text=True,
+                    check=True
+                )
+                if status.stdout.strip():
+                    return jsonify({"status": "success", "changes": status.stdout.strip()})
+                return jsonify({"status": "success", "message": "No changes to commit"})
+
+            elif task == "git_reset":
+                logging.info("Executing git_reset task.")
+                path = params.get("path", ".")
+                subprocess.run(["git", "reset", path], cwd=repo_path, check=True)
+                return jsonify({"status": "success", "message": f"Files unstaged: {path}"})
+
+            elif task == "rollback_changes":
+                logging.info("Executing rollback_changes task.")
+                commit_id = params.get("commit_id")
+                if not commit_id:
+                    return jsonify({"status": "error", "message": "commit_id is required"}), 400
+                subprocess.run(["git", "reset", "--hard", commit_id], cwd=repo_path, check=True)
+                return jsonify({"status": "success", "message": f"Rolled back to commit: {commit_id}"})
+
             else:
                 logging.error(f"Unsupported GitHub task: {task}")
                 return jsonify({"status": "error", "message": f"Unsupported GitHub task: {task}"}), 400
 
+        # Handle unsupported tools
         logging.error(f"Unsupported tool '{tool}'")
         return jsonify({"status": "error", "message": f"Unsupported tool '{tool}'."}), 400
 
@@ -186,6 +203,8 @@ def execute_task():
     except Exception as e:
         logging.error(f"Unexpected error: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
+
 
 
 
