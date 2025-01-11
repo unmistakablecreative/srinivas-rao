@@ -117,62 +117,48 @@ def execute_task():
         if tool == "github":
             repo_path = "/Users/srinivas/orchestrate-rebuild/"  # Path to Git repository
 
-            if task == "commit_changes":
-                logging.info("Executing commit_changes task.")
-                status = subprocess.run(
-                    ["git", "status", "--porcelain"],
-                    cwd=repo_path,
-                    capture_output=True,
-                    text=True,
-                    check=True
-                )
-                if not status.stdout.strip():
-                    return jsonify({"status": "error", "message": "Nothing to commit"}), 400
-
-                message = params.get("message", "Default commit message")
-                subprocess.run(["git", "add", "."], cwd=repo_path, check=True)
-                subprocess.run(["git", "commit", "-m", message], cwd=repo_path, check=True)
-                return jsonify({"status": "success", "message": f"Committed changes with message: '{message}'"})
-
-            elif task == "push_changes":
-                logging.info("Executing push_changes task.")
-                subprocess.run(["git", "push"], cwd=repo_path, check=True)
-                return jsonify({"status": "success", "message": "Changes pushed to remote repository"})
-
-            elif task == "pull_changes":
-                logging.info("Executing pull_changes task.")
-                subprocess.run(["git", "pull"], cwd=repo_path, check=True)
-                return jsonify({"status": "success", "message": "Latest changes pulled from remote repository"})
-
-            elif task == "force_apply_changes":
+            # Handle force_apply_changes
+            if task == "force_apply_changes":
                 logging.info("Executing force_apply_changes task.")
                 path = params.get("path")
-                content = params.get("content", "Force applied content.")
+                content = params.get("content", "")
                 if not path:
                     return jsonify({"status": "error", "message": "File path is required"}), 400
 
                 full_path = os.path.join(repo_path, path)
-                with open(full_path, "w") as f:
-                    f.write(content)
-                return jsonify({"status": "success", "message": f"File '{path}' has been updated with provided content."})
+                logging.info(f"Writing content to file: {full_path}")
+                try:
+                    with open(full_path, "w") as f:
+                        f.write(content)
+                    return jsonify({"status": "success", "message": f"File '{path}' has been updated with provided content."})
+                except Exception as e:
+                    logging.error(f"Failed to write to file '{path}': {str(e)}")
+                    return jsonify({"status": "error", "message": f"Failed to write to file '{path}': {str(e)}"}), 500
 
+            # Other Git operations
             elif task == "git_add":
                 logging.info("Executing git_add task.")
                 path = params.get("path", ".")
                 subprocess.run(["git", "add", path], cwd=repo_path, check=True)
                 return jsonify({"status": "success", "message": f"Files staged: {path}"})
 
+            elif task == "commit_changes":
+                logging.info("Executing commit_changes task.")
+                message = params.get("message", "Default commit message")
+                subprocess.run(["git", "add", "."], cwd=repo_path, check=True)
+                subprocess.run(["git", "commit", "-m", message], cwd=repo_path, check=True)
+                return jsonify({"status": "success", "message": f"Committed changes with message: '{message}'"})
+
+            elif task == "git_push":
+                logging.info("Executing git_push task.")
+                subprocess.run(["git", "push"], cwd=repo_path, check=True)
+                return jsonify({"status": "success", "message": "Changes pushed to remote repository"})
+
             elif task == "git_status":
                 logging.info("Executing git_status task.")
-                status = subprocess.run(
-                    ["git", "status", "--porcelain"],
-                    cwd=repo_path,
-                    capture_output=True,
-                    text=True,
-                    check=True
-                )
-                if status.stdout.strip():
-                    return jsonify({"status": "success", "changes": status.stdout.strip()})
+                result = subprocess.run(["git", "status", "--porcelain"], cwd=repo_path, capture_output=True, text=True, check=True)
+                if result.stdout.strip():
+                    return jsonify({"status": "success", "changes": result.stdout.strip()})
                 return jsonify({"status": "success", "message": "No changes to commit"})
 
             elif task == "git_reset":
@@ -203,8 +189,6 @@ def execute_task():
     except Exception as e:
         logging.error(f"Unexpected error: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
-
-
 
 
 
