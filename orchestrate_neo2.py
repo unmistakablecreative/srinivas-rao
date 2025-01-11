@@ -65,18 +65,38 @@ def execute_task():
         if tool == "github":
             repo_path = "/Users/srinivas/orchestrate-rebuild/"
 
-            if task == "commit_changes":
-                logging.info("Executing commit_changes task.")
-                status = subprocess.run(
-                    ["git", "status", "--porcelain"],
-                    cwd=repo_path,
-                    capture_output=True,
-                    text=True,
-                    check=True
-                )
-                if not status.stdout.strip():
-                    return jsonify({"status": "error", "message": "Nothing to commit"}), 400
+            # GitHub Task: Add
+            if task == "git_add":
+                logging.info("Executing git_add task.")
+                path = params.get("path", ".")
+                subprocess.run(["git", "add", path], cwd=repo_path, check=True)
+                return jsonify({"status": "success", "message": f"Added files: {path}"})
 
+            # GitHub Task: Reset
+            elif task == "git_reset":
+                logging.info("Executing git_reset task.")
+                path = params.get("path", ".")
+                subprocess.run(["git", "reset", path], cwd=repo_path, check=True)
+                return jsonify({"status": "success", "message": f"Reset files: {path}"})
+
+            # GitHub Task: Status
+            elif task == "git_status":
+                logging.info("Executing git_status task.")
+                result = subprocess.run(["git", "status"], cwd=repo_path, capture_output=True, text=True, check=True)
+                return jsonify({"status": "success", "message": result.stdout})
+
+            # GitHub Task: Rollback
+            elif task == "rollback_changes":
+                logging.info("Executing rollback_changes task.")
+                commit_id = params.get("commit_id")
+                if not commit_id:
+                    return jsonify({"status": "error", "message": "commit_id is required"}), 400
+                subprocess.run(["git", "reset", "--hard", commit_id], cwd=repo_path, check=True)
+                return jsonify({"status": "success", "message": f"Rolled back to commit: {commit_id}"})
+
+            # Other existing tasks like commit, push, pull, force apply, etc.
+            elif task == "commit_changes":
+                logging.info("Executing commit_changes task.")
                 message = params.get("message", "Default commit message")
                 subprocess.run(["git", "add", "."], cwd=repo_path, check=True)
                 subprocess.run(["git", "commit", "-m", message], cwd=repo_path, check=True)
@@ -119,34 +139,5 @@ def execute_task():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@app.route('/execute-script', methods=['POST'])
-def execute_script():
-    """Execute a script on the server."""
-    try:
-        script_path = request.json.get("script_path")
-        result = subprocess.run(
-            ["python3", script_path], capture_output=True, text=True
-        )
-        return jsonify({"output": result.stdout, "error": result.stderr})
-    except Exception as e:
-        logging.error(f"Script execution failed: {str(e)}")
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-
-@app.route('/self-test', methods=['GET'])
-def self_test():
-    """Run self-diagnostics for the server."""
-    results = {}
-    try:
-        health_response = app.test_client().get('/health')
-        results["health"] = {
-            "status": health_response.status_code,
-            "response": health_response.json
-        }
-    except Exception as e:
-        results["health"] = {"error": str(e)}
-
-    return jsonify(results)
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(host="0.0.0.0", port=80, debug=False)

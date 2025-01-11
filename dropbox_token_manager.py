@@ -5,13 +5,13 @@ import os
 # Configuration
 CONFIG_PATH = "/Users/srinivas/Dropbox/1. Projects/Orchestrate/Orchestrate Modular/Config/toolstack.json"
 TOKEN_URL = "https://api.dropboxapi.com/oauth2/token"
-
-# Environment variables (update if needed)
-APP_KEY = "ptg8oamzq8o9nzg"
-APP_SECRET = "nybqcp83mviq76e"
+APP_KEY = "r6km32a6dey795z"  # Your Dropbox App Key
+APP_SECRET = "nybqcp83mviq76e"  # Your Dropbox App Secret
 
 def refresh_access_token():
-    """Refresh the Dropbox access token using the refresh token."""
+    """
+    Refresh the Dropbox access token using the refresh token.
+    """
     try:
         # Load the current refresh token from the toolstack
         with open(CONFIG_PATH, "r") as file:

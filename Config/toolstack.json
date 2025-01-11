@@ -56,24 +56,10 @@
         "type": "script",
         "path": "github_manager.py",
         "tasks": {
-            "commit_changes": {
-                "description": "Commit staged changes to the repository.",
-                "params": {
-                    "message": ""
-                }
-            },
-            "push_changes": {
-                "description": "Push committed changes to the remote repository.",
-                "params": {}
-            },
-            "pull_changes": {
-                "description": "Pull the latest changes from the remote repository.",
-                "params": {}
-            },
             "force_apply_changes": {
-                "description": "Force overwrite Orchestrate_Sandbox.py in sandbox directory.",
                 "params": {
-                    "path": "Orchestrate_Sandbox.py"
+                    "path": "",
+                    "content": ""
                 }
             },
             "git_add": {
@@ -90,6 +76,26 @@
                 "description": "Unstage specific files or all files.",
                 "params": {
                     "path": ""
+                }
+            },
+            "commit_changes": {
+                "description": "Commit staged changes to the repository.",
+                "params": {
+                    "message": ""
+                }
+            },
+            "push_changes": {
+                "description": "Push committed changes to the remote repository.",
+                "params": {}
+            },
+            "pull_changes": {
+                "description": "Pull the latest changes from the remote repository.",
+                "params": {}
+            },
+            "rollback_changes": {
+                "description": "Roll back to a previous commit.",
+                "params": {
+                    "commit_id": ""
                 }
             }
         }
@@ -168,8 +174,8 @@
     },
     "system": {
         "tasks": {
-            "bootstrap": {
-                "description": "Initialize directories and files for Orchestrate NEO.",
+            "run_tests": {
+                "description": "Run all automated tests.",
                 "params": {}
             }
         }

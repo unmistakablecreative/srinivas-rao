@@ -1,64 +1,61 @@
-import subprocess
+import os
 import sys
 import json
-import os
+import subprocess
 
-# Define the correct Git repository path
+# Define repository path
 REPO_PATH = "/Users/srinivas/orchestrate-rebuild/"
 
-def run_git_command(command, cwd=REPO_PATH):
-    """Run a git command and handle errors."""
+def run_git_command(command):
+    """Run a git command in the repository directory."""
     try:
-        result = subprocess.run(command, cwd=cwd, capture_output=True, text=True, check=True)
+        result = subprocess.run(
+            command, cwd=REPO_PATH, capture_output=True, text=True, check=True
+        )
         return {"status": "success", "output": result.stdout.strip()}
     except subprocess.CalledProcessError as e:
-        return {"status": "error", "message": e.stderr.strip() or str(e)}
+        return {"status": "error", "message": e.stderr.strip()}
 
-def git_add(path="."):
+def force_apply_changes(params):
+    """Overwrite or create a file with specified content."""
+    path = params.get("path")
+    content = params.get("content")
+    if not path or not content:
+        return {"status": "error", "message": "Path and content are required for force_apply_changes"}
+
+    full_path = os.path.join(REPO_PATH, path)
+    try:
+        with open(full_path, "w") as file:
+            file.write(content)
+        return {"status": "success", "message": f"File '{path}' updated successfully"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+def git_add(params):
     """Stage specific files or all files."""
+    path = params.get("path", ".")
     return run_git_command(["git", "add", path])
 
 def git_status():
     """Check for uncommitted changes."""
-    result = run_git_command(["git", "status", "--porcelain"])
-    if result["status"] == "success" and result.get("output"):
-        return {"status": "success", "changes": result["output"]}
-    elif result["status"] == "success":
-        return {"status": "success", "message": "No changes to commit"}
-    return result
+    return run_git_command(["git", "status", "--porcelain"])
 
-def git_reset(path="."):
+def git_reset(params):
     """Unstage specific files or all files."""
+    path = params.get("path", ".")
     return run_git_command(["git", "reset", path])
 
-def check_uncommitted_changes():
-    """Check if there are uncommitted changes."""
-    status = git_status()
-    return status.get("status") == "success" and "changes" in status
-
-def commit_changes(message):
-    """Commit staged changes to the repository."""
-    if not check_uncommitted_changes():
-        return {"status": "error", "message": "Nothing to commit"}
+def commit_changes(params):
+    """Commit staged changes with a message."""
+    message = params.get("message", "Default commit message")
     return run_git_command(["git", "commit", "-m", message])
 
 def push_changes():
     """Push committed changes to the remote repository."""
     return run_git_command(["git", "push"])
 
-def pull_changes():
-    """Pull the latest changes from the remote repository."""
-    return run_git_command(["git", "pull"])
-
-def full_workflow(message):
-    """Execute a full workflow: commit, then push."""
-    commit_result = commit_changes(message)
-    if commit_result["status"] != "success":
-        return commit_result
-    return push_changes()
-
 def main():
-    """Process input and execute GitHub tasks."""
+    """Process input payload and execute GitHub tasks."""
     if len(sys.argv) < 2:
         print(json.dumps({"error": "No payload provided"}))
         sys.exit(1)
@@ -68,24 +65,22 @@ def main():
         task = payload.get("task")
         params = payload.get("params", {})
 
-        if task == "git_add":
-            result = git_add(params.get("path", "."))
+        if task == "force_apply_changes":
+            result = force_apply_changes(params)
+        elif task == "git_add":
+            result = git_add(params)
         elif task == "git_status":
             result = git_status()
         elif task == "git_reset":
-            result = git_reset(params.get("path", "."))
+            result = git_reset(params)
         elif task == "commit_changes":
-            result = commit_changes(params.get("message", "Default commit message"))
+            result = commit_changes(params)
         elif task == "push_changes":
             result = push_changes()
-        elif task == "pull_changes":
-            result = pull_changes()
-        elif task == "full_workflow":
-            result = full_workflow(params.get("message", "Default commit message"))
         else:
             result = {"status": "error", "message": f"Unsupported task: {task}"}
 
-        print(json.dumps(result, indent=2))  # Improved JSON output for readability
+        print(json.dumps(result, indent=2))
     except Exception as e:
         print(json.dumps({"status": "error", "message": str(e)}))
 

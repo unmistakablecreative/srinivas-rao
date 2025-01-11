@@ -1,0 +1,23 @@
+[
+    {
+        "description": "Test Dropbox get_file",
+        "result": {
+            "message": "Unsupported tool or task: dropbox/get_file",
+            "status": "error"
+        }
+    },
+    {
+        "description": "Test Dropbox search",
+        "result": {
+            "message": "Unsupported tool or task: dropbox/search",
+            "status": "error"
+        }
+    },
+    {
+        "description": "Test GitHub force_apply_changes",
+        "result": {
+            "message": "Unsupported tool or task: github/force_apply_changes",
+            "status": "error"
+        }
+    }
+]

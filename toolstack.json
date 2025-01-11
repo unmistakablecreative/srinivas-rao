@@ -1,0 +1,57 @@
+{
+  "dropbox": {
+    "credentials": {
+      "oauth2_access_token": "<DROPBOX_OAUTH_TOKEN>"
+    },
+    "tasks": {
+      "get_file": {
+        "params": {
+          "path": ""
+        }
+      },
+      "get_temporary_link": {
+        "params": {
+          "file_path": ""
+        }
+      },
+      "search": {
+        "params": {
+          "query": ""
+        }
+      }
+    },
+    "type": "script"
+  },
+  "github": {
+    "tasks": {
+      "commit_changes": {
+        "params": {
+          "message": ""
+        }
+      },
+      "force_apply_changes": {
+        "params": {
+          "path": "",
+          "content": ""
+        }
+      },
+      "git_add": {
+        "params": {
+          "path": ""
+        }
+      },
+      "push_changes": {
+        "params": {}
+      }
+    },
+    "type": "script"
+  },
+  "system": {
+    "tasks": {
+      "run_tests": {
+        "description": "Run all automated tests.",
+        "params": {}
+      }
+    }
+  }
+}
