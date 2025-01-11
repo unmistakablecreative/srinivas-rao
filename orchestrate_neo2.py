@@ -91,6 +91,7 @@ def execute_script():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
+
 @app.route('/execute-task', methods=['POST'])
 def execute_task():
     """Execute tasks based on the toolstack configuration."""
@@ -154,6 +155,16 @@ def execute_task():
                 subprocess.run(["git", "push"], cwd=repo_path, check=True)
                 return jsonify({"status": "success", "message": "Changes pushed to remote repository"})
 
+            elif task == "git_pull":
+                logging.info("Executing git_pull task.")
+                try:
+                    result = subprocess.run(["git", "pull"], cwd=repo_path, capture_output=True, text=True, check=True)
+                    logging.info(f"Git pull output: {result.stdout.strip()}")
+                    return jsonify({"status": "success", "message": "Repository updated successfully", "output": result.stdout.strip()})
+                except subprocess.CalledProcessError as e:
+                    logging.error(f"Git pull failed: {e.stderr}")
+                    return jsonify({"status": "error", "message": f"Git pull failed: {e.stderr}"}), 500
+
             elif task == "git_status":
                 logging.info("Executing git_status task.")
                 result = subprocess.run(["git", "status", "--porcelain"], cwd=repo_path, capture_output=True, text=True, check=True)
@@ -189,8 +200,6 @@ def execute_task():
     except Exception as e:
         logging.error(f"Unexpected error: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
-
-
 
 
 @app.route('/self-test', methods=['GET'])

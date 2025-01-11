@@ -149,8 +149,7 @@ def get_file(file_path):
             raise Exception(f"Failed to get file: {response.text}")
 
         file_content = response.content.decode("utf-8")
-        print(f"File content:
-{file_content}")
+        print(f"File content:\n{file_content}")
         return file_content
 
     except Exception as e:
