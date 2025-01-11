@@ -45,33 +45,41 @@ def get_toolstack():
 
 @app.route('/execute-script', methods=['POST'])
 def execute_script():
-    """Execute a Python script dynamically."""
+    """Execute a Python script dynamically with arguments or a payload."""
     try:
-        # Parse JSON payload
+        # Parse the incoming JSON payload
         data = request.get_json()
         if not data or "script_path" not in data:
-            return jsonify({"status": "error", "message": "Missing or invalid 'script_path' parameter"}), 400
+            return jsonify({"status": "error", "message": "Missing 'script_path' parameter"}), 400
 
-        # Extract script path
+        # Extract the script parameters
         script_path = data["script_path"]
+        payload = data.get("payload", None)
+        arguments = data.get("arguments", [])
 
-        # Ensure the script exists
+        # Ensure the script file exists
         if not os.path.exists(script_path):
             return jsonify({"status": "error", "message": f"Script not found: {script_path}"}), 404
 
-        # Extract additional arguments or payload
-        arguments = data.get("arguments", [])  # Pass a list of arguments
-        if not isinstance(arguments, list):
-            return jsonify({"status": "error", "message": "'arguments' must be a list"}), 400
+        # Prepare the command to execute
+        args = ["python3", script_path]
 
-        # Execute the script with arguments
-        result = subprocess.run(
-            ["python3", script_path] + arguments,
-            capture_output=True,
-            text=True
-        )
+        # Pass the payload as a JSON string if present
+        if payload:
+            args.append(json.dumps(payload))
 
-        # Return the output and error (if any)
+        # Append any additional arguments as-is
+        if arguments:
+            for arg in arguments:
+                args.append(arg)
+
+        # Log the exact command for debugging purposes
+        logging.info(f"Executing script with args: {args}")
+
+        # Execute the script
+        result = subprocess.run(args, capture_output=True, text=True)
+
+        # Return the result
         return jsonify({
             "status": "success" if result.returncode == 0 else "error",
             "output": result.stdout.strip(),
@@ -79,10 +87,8 @@ def execute_script():
         }), 200 if result.returncode == 0 else 500
 
     except Exception as e:
-        logging.error(f"Script execution failed: {str(e)}")
+        logging.error(f"Error in execute-script: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
-
-
 
 
 @app.route('/execute-task', methods=['POST'])
